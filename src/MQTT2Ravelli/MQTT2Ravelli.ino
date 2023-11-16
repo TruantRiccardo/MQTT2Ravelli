@@ -200,17 +200,23 @@ void RunOTA() {
   });
 
   ArduinoOTA.begin();
+
+  client.publish(topic_OTAStatus, "OTA Ready");
 }
 
 void connectMQTT() {
-  while (!client.connected()) {
+  //set a max counter oterwise if it cannot connect to the MQTT broker the esp will get stuck and you cannot program it via OTA
+  uint8_t MQTTstart = 0;
+  while (!client.connected() && (MQTTstart < 2)) {
     if (client.connect("ESPClient", mqtt_username, mqtt_password)) {
       // Serial.println("MQTT broker connected");
       client.publish(topic_EspStatus, "Connected!");
+      client.publish(topic_EspRestart, "ESP Running");
     } else {
       // Serial.print("failed with state ");
       // Serial.println(client.state());
       // Serial.println("New try in 2 seconds");
+      MQTTstart++;
       delay(2000);
     }
   }
@@ -238,6 +244,7 @@ void connectMQTT() {
   client.subscribe(topic_ExhaustTemperature_Cmnd);
   client.subscribe(topic_ElectronicTemperature_Cmnd);
   client.subscribe(topic_Custom_Serial_Cmnd);
+
 }
 
 uint16_t PingSensor() {  // Ultrasonic (Ping) Distance Sensor
